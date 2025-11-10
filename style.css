@@ -50,7 +50,7 @@ body {
 }
 
 /* ---------------------------------------------------- */
-/* ESTILO DEL MÓDULO DE SUSCRIPCIÓN */
+/* ESTILO DEL MÓDULO DE SUSCRIPCIÓN Y ÉXITO */
 .subscription-module {
     position: fixed;
     top: 50%;
@@ -62,7 +62,7 @@ body {
     text-align: center;
     line-height: 1.5;
     
-    /* Ocultar completamente al inicio (JS lo hará visible) */
+    /* Ocultar completamente al inicio */
     display: none; 
     opacity: 0;
 }
@@ -115,10 +115,20 @@ body {
     background: #c9961d; 
 }
 
+/* NUEVO: Estilo para el subtítulo del mensaje de éxito */
+.success-subtitle {
+    font-size: 18px;
+    color: var(--black-color);
+    margin-top: -15px; /* Ajuste visual */
+}
+
 /* Ajustes de tipografía responsiva para el título del formulario */
 @media (max-width: 767px) {
     .subscription-module h2 {
         font-size: 24px;
+    }
+    .success-subtitle {
+        font-size: 16px;
     }
 }
 @media (max-width: 480px) {
@@ -226,32 +236,6 @@ button {
   position: fixed;
   top: 0px;
   left: 0px;
-}
-.circle {
-  position: absolute;
-  background-color: var(--black-color);
-  width: 10px;
-  height: 10px;
-  left: 0px;
-  top: 0px;
-  border-radius: 100%;
-  z-index: 111111;
-  user-select: none;
-  pointer-events: none;
-  transition: all 0.05s;
-}
-.circle-follow {
-  position: absolute;
-  border: 1px solid var(--black-color);
-  width: 40px;
-  height: 40px;
-  left: 0px;
-  top: 0px;
-  border-radius: 100%;
-  z-index: 111111;
-  user-select: none;
-  pointer-events: none;
-  transition: all 0.1s;
 }
 
 .hide-text {

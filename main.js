@@ -71,7 +71,8 @@ positions.forEach((pos, index) => {
 });
 
 scene.add(group);
-group.position.x = -1; 
+// Ajustado a 0 para centrar en el eje X
+group.position.x = 0; 
 
 // Lighting
 const ambientLight = new THREE.AmbientLight(0xffffff, 1);
@@ -92,24 +93,27 @@ const mouse = new THREE.Vector2();
 const tempVector = new THREE.Vector3();
 const forces = new Map(); 
 
-const initY = -25; 
+// --- PARÁMETROS DE ANIMACIÓN ---
+const initY = -50; // Aparecer desde más abajo
 const revolutionRadius = 4; 
 const revolutionDuration = 2; 
-
 const breathingAmplitude = 0.1; 
 const breathingSpeed = 0.002; 
+// --------------------------------------------
 
 // Initialize spheres below screen
 spheres.forEach((sphere, i) => {
   sphere.position.y = initY;
 });
 
+// --- FUNCIÓN DE CARGA INICIAL (ROTACIÓN CIRCULAR) ---
 function initLoadingAnimation() {
   spheres.forEach((sphere, i) => {
     const delay = i * 0.02;
 
     gsap
       .timeline()
+      // Primera mitad de la rotación (Bottom to Top, +Z)
       .to(sphere.position, {
         duration: revolutionDuration / 2,
         y: revolutionRadius,
@@ -122,6 +126,7 @@ function initLoadingAnimation() {
         },
         delay: delay
       })
+      // Segunda mitad de la rotación (Top to Final Position, -Z)
       .to(sphere.position, {
         duration: revolutionDuration / 2,
         y: initY / 5,
@@ -133,6 +138,7 @@ function initLoadingAnimation() {
             Math.sin(progress * Math.PI) * revolutionRadius;
         }
       })
+      // Regresa a la posición final (Original Position)
       .to(sphere.position, {
         duration: 0.6, 
         x: sphere.userData.originalPosition.x,
@@ -142,18 +148,20 @@ function initLoadingAnimation() {
       });
   });
 }
+// ---------------------------------------------------
 
 window.addEventListener("load", initLoadingAnimation);
 
 // Manejo de elementos de texto
 const hiddenElements = document.querySelectorAll(".hide-text");
 const main_txt = document.querySelector(".main-txt");
-const mouse_effect = document.querySelector(".mouse-effect");
 
 // REFERENCIAS DOM
 const melMortisButton = document.getElementById('mel-mortis-button');
 const subscriptionForm = document.getElementById('subscription-form');
-const submissionFormElement = document.getElementById('submission-form'); 
+const submissionFormElement = document.getElementById('submission-form');
+const successMessage = document.getElementById('success-message'); // Mensaje de éxito
+const successText = document.getElementById('success-text');       // Título del éxito
 
 
 // Inicialización de la bandera de carga
@@ -226,7 +234,6 @@ if (submissionFormElement) {
     submissionFormElement.addEventListener('submit', function(event) {
         event.preventDefault(); 
         
-        // Captura de datos del formulario por nombre de campo
         const userName = this.querySelector('input[name="user_name"]').value;
         const userEmail = this.querySelector('input[name="user_email"]').value;
 
@@ -235,7 +242,6 @@ if (submissionFormElement) {
             return;
         }
 
-        // 1. Definir los parámetros de la plantilla
         const templateParams = {
             user_name: userName, 
             user_email: userEmail, 
@@ -243,24 +249,54 @@ if (submissionFormElement) {
             reply_to: userEmail,
         };
 
+        // 1. Desvanecer el formulario antes de enviar el email
+        gsap.to(subscriptionForm, { 
+            opacity: 0, 
+            duration: 0.4, 
+            ease: "power2.inOut",
+            onComplete: () => {
+                submissionForm.style.display = 'none';
+            }
+        });
+
+
         // 2. Enviar el correo usando EmailJS
         emailjs.send(SERVICE_ID, TEMPLATE_ID, templateParams)
             .then(function(response) {
                 console.log('Correo enviado con éxito!', response.status, response.text);
                 
-                alert(`¡Confirmación enviada a ${userName}! Revisa tu correo, te avisaremos cuando el lote resurja.`);
+                // --- LÓGICA DE REEMPLAZO Y ÉXITO ---
                 
-                // Desvanecer el formulario después del éxito
-                gsap.to(subscriptionForm, { opacity: 0, duration: 0.5, onComplete: () => {
-                    subscriptionForm.style.display = 'none';
-                }});
-
-                // Limpiar los campos
+                // Actualiza el texto con el nombre del usuario
+                successText.innerHTML = `¡Confirmación enviada a ${userName}!`;
+                
+                // Muestra el mensaje de éxito
+                gsap.fromTo(successMessage, 
+                    { 
+                        opacity: 0, 
+                        scale: 0.95, 
+                        display: 'block' 
+                    },
+                    {
+                        opacity: 1,
+                        scale: 1,
+                        duration: 0.5,
+                        delay: 0.2, 
+                        ease: "power2.out"
+                    }
+                );
+                
                 this.reset();
+                // ------------------------------------
 
             }.bind(this), function(error) { 
                 console.error('Fallo al enviar el correo:', error);
                 alert('Error al enviar la confirmación. Inténtalo de nuevo.');
+                
+                // Revertir la opacidad del formulario si falla el envío
+                gsap.to(subscriptionForm, { opacity: 1, duration: 0.5, onStart: () => {
+                     subscriptionForm.style.display = 'block';
+                }});
             });
     });
 }
@@ -269,21 +305,7 @@ if (submissionFormElement) {
 // LÓGICA DE INTERACCIÓN 3D RESTANTE
 // ==================================================================================
 
-gsap.set(".circle", { xPercent: -50, yPercent: -50 });
-gsap.set(".circle-follow", { xPercent: -50, yPercent: -50 });
-
-let xTo = gsap.quickTo(".circle", "x", { duration: 0.6, ease: "power3" }),
-  yTo = gsap.quickTo(".circle", "y", { duration: 0.6, ease: "power3" });
-
-let xFollow = gsap.quickTo(".circle-follow", "x", {
-    duration: 0.6,
-    ease: "power3"
-  }),
-  yFollow = gsap.quickTo(".circle-follow", "y", {
-    duration: 0.6,
-    ease: "power3"
-  });
-
+// Las siguientes variables y lógica fueron eliminadas: mouse_effect, circle, circle-follow, xTo, yTo, xFollow, yFollow.
 
 /**
  * FUNCIÓN UNIFICADA para manejar Mouse y Touch (Interacción 3D)
@@ -302,14 +324,6 @@ function onPointerMove(event) {
     clientY = event.clientY;
   }
   
-  if (!event.touches) {
-    mouse_effect.style.opacity = "1";
-    xTo(clientX);
-    yTo(clientY);
-    xFollow(clientX);
-    yFollow(clientY);
-  }
-
   // Lógica de Raycasting (Interacción con esferas)
   mouse.x = (clientX / window.innerWidth) * 2 - 1;
   mouse.y = -(clientY / window.innerHeight) * 2 + 1;
@@ -357,6 +371,7 @@ function animate() {
   requestAnimationFrame(animate);
 
   if (loadingComplete) {
+    // --- ANIMACIÓN DE BUCLE (Breathing Animation) ---
     const time = Date.now() * breathingSpeed;
     spheres.forEach((sphere, i) => {
       const offset = i * 0.2;
@@ -373,6 +388,7 @@ function animate() {
         }
       }
 
+      // Regresa a la posición original con el offset de respiración
       const originalPos = sphere.userData.originalPosition;
       tempVector.set(
         originalPos.x,
@@ -381,6 +397,7 @@ function animate() {
       );
       sphere.position.lerp(tempVector, 0.018);
     });
+    // ----------------------------------------------------
 
     handleCollisions();
   }
@@ -396,7 +413,8 @@ window.addEventListener("touchstart", onPointerMove, { passive: true });
 function updateCameraPosition() {
     const aspect = window.innerWidth / window.innerHeight;
     let targetZ = DEFAULT_CAMERA_Z / Math.min(aspect, 1.25); 
-    targetZ = Math.max(targetZ, 18); 
+    const minZ = (window.innerWidth < 768) ? 25 : 18; // Ajuste para móviles
+    targetZ = Math.max(targetZ, minZ); 
 
     gsap.to(camera.position, {
         duration: 0.5,
